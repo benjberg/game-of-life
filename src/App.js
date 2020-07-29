@@ -3,33 +3,64 @@ import produce from 'immer';
 import {useForm} from 'react-hook-form';
 
 // defines play space dimentions 
-const numRows = 25;
-const numCols = 25;
-// defines all possible neighbors 
-const operations = [
-  [0,1],
-  [0,-1],
-  [1,-1],
-  [-1,1],
-  [1,1],
-  [-1,-1],
-  [1,0],
-  [-1,0]
-]
-const generateEmptyBoard = () => {
-  const rows = [];
-  for (let i = 0; i < numRows; i++){
-    rows.push(Array.from(Array(numCols), () => 0))
-  }
-  return rows
-}
+// const numRows = 25;
+// const numCols = 25;
+// // defines all possible neighbors 
+// const operations = [
+//   [0,1],
+//   [0,-1],
+//   [1,-1],
+//   [-1,1],
+//   [1,1],
+//   [-1,-1],
+//   [1,0],
+//   [-1,0]
+// ]
+// const generateEmptyBoard = () => {
+//   const rows = [];
+//   for (let i = 0; i < numRows; i++){
+//     rows.push(Array.from(Array(numCols), () => 0))
+//   }
+//   return rows
+// }
 function App() {
+  const [numRows,setNumRow] = useState(25);
+  const rowsRef = useRef(numRows);
+  rowsRef.current = numRows
+  const [numCols, setNumCols] = useState(25);
+  const colsRef = useRef(numCols);
+  colsRef.current = numCols
+
+  const operations = [
+    [0,1],
+    [0,-1],
+    [1,-1],
+    [-1,1],
+    [1,1],
+    [-1,-1],
+    [1,0],
+    [-1,0]
+  ]
+
+ 
+
   const {handleSubmit} = useForm();
+  const handleRowChange = (event) => {
+    rowsRef.current = event.target.value
+    setNumRow(rowsRef.current)
+  }
+  const handleColsChange = (event) => {
+    setNumCols(event.target.value)
+  }
   const onSubmit = data => console.log(data);
   
   // set up our grid state
   const [grid, setGrid] = useState(() => {
-    return generateEmptyBoard()
+    const rows = [];
+  for (let i = 0; i < rowsRef.current; i++){
+    rows.push(Array.from(Array(colsRef.current), () => 0))
+  }
+  return rows
   });
   // set game state 
   const [running, setRunning] = useState(false);
@@ -46,14 +77,14 @@ function App() {
       //runs through every cell in g and returns return a new grid based on the first with immer so we can change states
       return produce(g, gridCopy => {
         // loop through our rows and cols this will help us check for neighbors
-        for (let i = 0; i < numRows; i++) {
-          for (let k = 0; k < numCols; k++) {
+        for (let i = 0; i < rowsRef.current; i++) {
+          for (let k = 0; k < colsRef.current; k++) {
             let neighbors = 0;
             // grabs our pre-defined operations and checks them agains the cell making sure that it's a) within bounds and b) if it has a neighbor
             operations.forEach(([x, y]) => {
               const newI = i + x;
               const newK = k + y;
-              if (newI >= 0 && newI < numRows && newK >= 0 && newK < numCols) {
+              if (newI >= 0 && newI < rowsRef.current && newK >= 0 && newK < colsRef.current) {
                 neighbors += g[newI][newK];
               }
             });
@@ -86,24 +117,28 @@ function App() {
     }}>{running ? 'stop' : 'start'}</button>
     {/* button to clear the current board */}
     <button onClick = {() => {
-      setGrid(generateEmptyBoard());
+      const rows = [];
+      for (let i = 0; i < rowsRef.current; i++){
+        rows.push(Array.from(Array(colsRef.current), () => 0))
+      }
+      return setGrid(rows)
     }}>Clear Board</button>
     {/* button for random selection */}
     <button onClick = {() =>{
       const rows = [];
-      for (let i = 0; i < numRows; i++){
-        rows.push(Array.from(Array(numCols), () => Math.random() > .9 ? 1 : 0))
+      for (let i = 0; i < rowsRef.current; i++){
+        rows.push(Array.from(Array(colsRef.current), () => Math.random() > .9 ? 1 : 0))
       }
       setGrid(rows)
     }}>Randomize</button>
     <form onSubmit={handleSubmit(onSubmit)}>
-      <input type="number" placeholder="rows" name="rows"  />
-      <input type="number" placeholder="cols" name="cols"  />
+      <input type="number" placeholder="rows" name="rows" onChange={handleRowChange} value={rowsRef.current} />
+      <input type="number" placeholder="cols" name="cols" onChange={handleColsChange} />
 
       <input type="submit" value='submit'/>
     </form>
     {/* creates graph repeats xcol num set to 20px */}
-   <div style={{display: 'grid', gridTemplateColumns: `repeat(${numCols}, 20px)`}}> 
+   <div style={{display: 'grid', gridTemplateColumns: `repeat(${colsRef.current}, 20px)`}}> 
   {/* map through grid taking index of i and k to find location */}
      {grid.map((rows, i) => 
      rows.map((col, k) => <div key={`${i}-${k}`} 
