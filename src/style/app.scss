@@ -1,0 +1,39 @@
+h1 {
+    text-align: center;
+}
+
+.playboard {
+justify-content: center;
+}
+
+.controls {
+    
+    display: block;
+    text-align: center;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+}
+
+.buttons{
+    display: flex;
+    justify-content: center;
+    
+}
+.button {
+    padding:1rem;
+    margin: 1.3rem;
+}
+.label {
+    margin-top: .5rem;
+    margin-bottom: .5rem;
+    
+}
+.bdiv {
+   display: flex;
+   justify-content: center;
+}

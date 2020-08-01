@@ -1,28 +1,15 @@
-import React, {useState, useCallback, useRef} from 'react';
+import React, {useState, useCallback, useRef, useEffect} from 'react';
 import produce from 'immer';
 import {useForm} from 'react-hook-form';
+import randomColor from 'randomcolor'; 
+import '../src/style/app.scss';
+import Rules from './Rules.js';
 
-// defines play space dimentions 
-// const numRows = 25;
-// const numCols = 25;
-// // defines all possible neighbors 
-// const operations = [
-//   [0,1],
-//   [0,-1],
-//   [1,-1],
-//   [-1,1],
-//   [1,1],
-//   [-1,-1],
-//   [1,0],
-//   [-1,0]
-// ]
-// const generateEmptyBoard = () => {
-//   const rows = [];
-//   for (let i = 0; i < numRows; i++){
-//     rows.push(Array.from(Array(numCols), () => 0))
-//   }
-//   return rows
-// }
+
+
+
+
+
 function App() {
   const [numRows,setNumRow] = useState(25);
   const rowsRef = useRef(numRows);
@@ -30,7 +17,14 @@ function App() {
   const [numCols, setNumCols] = useState(25);
   const colsRef = useRef(numCols);
   colsRef.current = numCols
-
+  const [speed, setSpeed] = useState(750);
+  const [color, setColor] = useState('red');
+  const [deadColor,setDeadColor] = useState('white');
+  const [gen, setGen] = useState(0);
+  const genRef = useRef(gen)
+  genRef.current = gen
+  
+  
   const operations = [
     [0,1],
     [0,-1],
@@ -44,15 +38,9 @@ function App() {
 
  
 
-  const {handleSubmit} = useForm();
-  const handleRowChange = (event) => {
-    rowsRef.current = event.target.value
-    setNumRow(rowsRef.current)
-  }
-  const handleColsChange = (event) => {
-    setNumCols(event.target.value)
-  }
-  const onSubmit = data => console.log(data);
+  
+  
+
   
   // set up our grid state
   const [grid, setGrid] = useState(() => {
@@ -75,8 +63,11 @@ function App() {
 // set grid to start
     setGrid(g => {
       //runs through every cell in g and returns return a new grid based on the first with immer so we can change states
+      
       return produce(g, gridCopy => {
         // loop through our rows and cols this will help us check for neighbors
+       
+        
         for (let i = 0; i < rowsRef.current; i++) {
           for (let k = 0; k < colsRef.current; k++) {
             let neighbors = 0;
@@ -98,52 +89,85 @@ function App() {
             }
           }
         }
+        
+        
       });
     });
+    setGen(genRef.current + 1)
+    setTimeout(runSim, speed);
+  }, [speed]);
 
-    setTimeout(runSim, 750);
-  }, []);
+  
 
   
   return (
     <>
-    {/*  button set game state stop/start*/}
-    <button onClick={() => {
+    <h1>Conways Game of Life</h1>
+    <div className='bdiv'>
+     <Rules>Game Rules</Rules>
+    </div>
+    <div className='controls'>
+
+    <div className='buttons'>
+      {/*  button set game state stop/start*/}
+    <button className='button' onClick={() => {
       setRunning(!running);
       if (!running) {
         runningRef.current = true;
         runSim();
       }
     }}>{running ? 'stop' : 'start'}</button>
+    {/* Button for random colors */}
+    <button className='button' onClick = {() =>{
+      setColor(randomColor());
+      setDeadColor(randomColor())
+    }}>Random Colors</button>
     {/* button to clear the current board */}
-    <button onClick = {() => {
+    <button className='button' onClick = {() => {
       const rows = [];
       for (let i = 0; i < rowsRef.current; i++){
         rows.push(Array.from(Array(colsRef.current), () => 0))
       }
+      setGen(0)
       return setGrid(rows)
     }}>Clear Board</button>
     {/* button for random selection */}
-    <button onClick = {() =>{
+    <button className='button' onClick = {() =>{
       const rows = [];
       for (let i = 0; i < rowsRef.current; i++){
-        rows.push(Array.from(Array(colsRef.current), () => Math.random() > .9 ? 1 : 0))
+        rows.push(Array.from(Array(colsRef.current), () => Math.random() > .8 ? 1 : 0))
       }
       setGrid(rows)
     }}>Randomize</button>
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <input type="number" placeholder="rows" name="rows" onChange={handleRowChange} value={rowsRef.current} />
-      <input type="number" placeholder="cols" name="cols" onChange={handleColsChange} />
-
-      <input type="submit" value='submit'/>
+    </div>
+    <form className='form'>
+      {/* input to change speed */}
+      <label classname='label'>
+          game speed in milliseconds:
+          <input className='input' type="number" value={speed} onChange={e => setSpeed(e.target.value)}/>
+      </label>
+      {/* input to change living cell color */}
+      <label className='label'>
+          Live Cell Color:
+          <input className='input' type="text" value={color} onChange={e => setColor(e.target.value)}/>
+      </label>
+      {/* input to change dead cell color */}
+      <label className='label'>
+          Dead Cell Color:
+          <input className='input' type="text" value={deadColor} onChange={e => setDeadColor(e.target.value)}/>
+      </label>
+        
+      <p>Generation: {gen}</p>
+      
     </form>
+    </div>
     {/* creates graph repeats xcol num set to 20px */}
-   <div style={{display: 'grid', gridTemplateColumns: `repeat(${colsRef.current}, 20px)`}}> 
+   <div className='playboard' style={{display: 'grid', gridTemplateColumns: `repeat(${colsRef.current}, 20px)`}}> 
   {/* map through grid taking index of i and k to find location */}
      {grid.map((rows, i) => 
      rows.map((col, k) => <div key={`${i}-${k}`} 
      style={{
-       width: 20, height: 20, backgroundColor: grid[i][k] ? 'red' : undefined, border: 'solid 1px black'}}
+       width: 20, height: 20, backgroundColor: grid[i][k] ? color : deadColor, border: 'solid 1px black'}}
        onClick={ () => {
          // calls produce from immer and allows us to change and track state of grid/ takes state and gives us a copy to change, then takes changes and produces immutable state (next state)
         const newGrid = produce(grid, gridCopy => {
